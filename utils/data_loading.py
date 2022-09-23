@@ -8,16 +8,24 @@ import torch
 from PIL import Image
 from torch.utils.data import Dataset
 
+import cv2
+
 
 class BasicDataset(Dataset):
-    def __init__(self, images_dir: str, masks_dir: str, scale: float = 1.0, mask_suffix: str = ''):
+    def __init__(self, images_dir: str, masks_dir: str, scale: float = 1.0, mask_suffix: str = '', transforms=None):
         self.images_dir = Path(images_dir)
         self.masks_dir = Path(masks_dir)
         assert 0 < scale <= 1, 'Scale must be between 0 and 1'
         self.scale = scale
         self.mask_suffix = mask_suffix
 
-        self.ids = [splitext(file)[0] for file in listdir(images_dir) if not file.startswith('.')]
+#         self.ids = [splitext(file)[0] for file in listdir(images_dir) if not file.startswith('.')]
+        self.ids = []
+        for file in listdir(images_dir):
+            if not file.startswith('.'):
+                img = cv2.imread(images_dir + file, 0)
+                if img.sum() > 99999:
+                    self.ids.append(splitext(file)[0])
         if not self.ids:
             raise RuntimeError(f'No input file found in {images_dir}, make sure you put your images there')
         logging.info(f'Creating dataset with {len(self.ids)} examples')
